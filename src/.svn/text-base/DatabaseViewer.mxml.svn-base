@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="vertical"
+	 width="800" height="550" 
+	 backgroundGradientAlphas="[1.0, 1.0]" 
+	 backgroundGradientColors="[#232323, #0A0A0A]"
+	 verticalScrollPolicy="off"
+	 initialize="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.pomodairo.Pomodoro;
+			import com.pomodairo.db.Storage;
+			
+			private var db:Storage = new Storage();
+			
+			private function init():void {
+				db.initAndOpenDatabase();
+				db.getAllItems();
+			}
+			
+			private function onUsersDataGridChanged(event:Event):void{}
+	        
+	        private function onRemovePomodoroClicked(event:MouseEvent):void
+	        {
+	        	remove(pomodorosDataGrid.selectedItem as Pomodoro);
+	        	db.getAllItems();
+	        }
+	        
+	        private function remove(pom:Pomodoro):void
+	        {
+	        	db.remove(pom);
+	        }
+	        
+			private function onAddPomodoroClicked(event:MouseEvent):void
+	        {
+	        	var pom:Pomodoro = new Pomodoro();
+	        	pom.name = nameInput.text;
+	        	pom.pomodoros = new Number(countInput.text);
+	        	pom.done = doneInput.selected;
+	        	db.addPomodoro(pom);
+	        	db.getAllItems();
+	        } 
+	        
+	        private function refresh(event:MouseEvent):void
+	        {
+	        	db.getAllItems();
+	        }
+	        
+	        private function cleanup(event:MouseEvent):void
+	        {
+	        	for each (var pom:Pomodoro in db.dataset)
+	        	{
+	        		if (pom.type == Pomodoro.TYPE_INTERRUPTION) {
+	        			remove(pom);
+	        		} else if (pom.done) {
+	        			remove(pom);
+	        		}
+	        	}
+	        	db.getAllItems();
+	        }
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Label text="Pomodairo DB Viewer" color="#F4F4F4" fontSize="14" fontWeight="bold" fontFamily="Verdana"/>
+		<mx:Panel width="90%" layout="vertical" id="dataGridPanel" title="Pomodairo Records">
+		<mx:DataGrid id="pomodorosDataGrid"
+			dataProvider="{db.dataset}" 
+			height="175"
+			editable="false"
+			change="onUsersDataGridChanged(event)" width="100%">
+			<mx:columns>
+				<mx:DataGridColumn width="20" headerText="ID" dataField="id"/>
+				<mx:DataGridColumn width="100" headerText="Name" dataField="name"/>
+				<mx:DataGridColumn width="70" headerText="Type" dataField="type"/>
+				<mx:DataGridColumn width="40" headerText="Pomodoros" dataField="pomodoros"/>
+				<mx:DataGridColumn width="40" headerText="Estimated" dataField="estimated"/>
+				<mx:DataGridColumn width="40" headerText="Unplanned" dataField="unplanned"/>
+				<mx:DataGridColumn width="40" headerText="Interruptions" dataField="interruptions"/>
+				<mx:DataGridColumn width="40" headerText="Done" dataField="done"/>
+				<mx:DataGridColumn width="40" headerText="Parent" dataField="parent"/>
+				<mx:DataGridColumn width="100" headerText="Created" dataField="created"/>
+				<mx:DataGridColumn width="100" headerText="Closed" dataField="closed"/>
+				<mx:DataGridColumn width="100" headerText="Visible" dataField="visible"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:ControlBar>
+			<mx:Button id="removeButton" label="Remove Item" click="onRemovePomodoroClicked(event)"/>
+			<mx:Button id="cleanupButton" label="Cleanup" click="cleanup(event)" toolTip="Permanently removes all interruptions and done items"/>
+			<mx:Button id="refreshButton" label="Refresh" click="refresh(event)" toolTip="Refresh the results" />
+		</mx:ControlBar>
+	</mx:Panel>
+	
+	<mx:Panel width="90%" height="200" layout="vertical" id="addItemPanel" title="Add Item">
+		<mx:Form>
+			<mx:FormItem label="Name:">
+				<mx:TextInput id="nameInput"/>
+			</mx:FormItem>
+			<mx:FormItem label="Type:">
+				<mx:TextInput id="typeInput"/>
+			</mx:FormItem>
+			<mx:FormItem label="Pomodoros:">
+				<mx:TextInput id="countInput"/>
+			</mx:FormItem>
+			<mx:FormItem label="Done:">
+				<mx:CheckBox id="doneInput"/>
+			</mx:FormItem>
+		</mx:Form>
+		<mx:ControlBar>
+			<mx:Button id="addPomodoroButton" 
+				label="Add Item"
+				click="onAddPomodoroClicked(event)"/>
+		</mx:ControlBar>
+	</mx:Panel>
+	
+</mx:WindowedApplication>

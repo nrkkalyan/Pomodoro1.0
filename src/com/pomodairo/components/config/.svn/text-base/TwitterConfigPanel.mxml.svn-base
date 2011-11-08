@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
+	creationComplete="init()">
+
+
+<mx:Script>
+        <![CDATA[
+        	import com.pomodairo.PomodoroEventDispatcher;
+        	import com.pomodairo.db.Storage;
+        	import com.pomodairo.events.ConfigurationUpdatedEvent;
+        	
+        	import mx.controls.Alert;
+        	
+        	public static var ENABLED:String = "twitter.enabled";
+        	public static var POST_POMODOROS:String = "twitter.doPost";
+        	public static var GROUP_USERNAME:String = "twitter.groupUsername";
+        	
+        	private var twitterEnabled:Boolean = new Boolean(false);
+        	private var doPost:Boolean = new Boolean(false);
+        	private var username:String = new String();
+        	private var password:String = new String();
+        	private var groupUsername:String = new String();
+        	
+        	private function init():void
+        	{
+        		populate();
+        		applyGuiValues();	
+        	}
+        	
+        	public function populate():void
+        	{
+        		var props:Dictionary = Storage.instance.config;
+        		
+        		if (props[ENABLED] != null) 
+        		{
+        			twitterEnabled = props[ENABLED] == "true";
+        		}
+        		
+        		if (props[POST_POMODOROS] != null) 
+        		{
+        			doPost = props[POST_POMODOROS] == "true";
+        		}
+        		
+        		if (props[GROUP_USERNAME] != null) 
+        		{
+        			groupUsername = props[GROUP_USERNAME];
+        		}
+        		
+        	}
+        	
+        	private function applyGuiValues():void
+            {
+        		enabledCheckbox.selected = twitterEnabled;
+        		postCheckbox.selected = doPost;
+        		groupUsernameField.text = groupUsername;
+            }
+        	
+            private function exit():void
+            {
+            	this.parent.removeChild(this);
+            }
+            
+            public function save():void
+            {
+            	twitterEnabled = enabledCheckbox.selected;
+            	doPost = postCheckbox.selected;
+            	groupUsername = groupUsernameField.text;
+            	
+            	Storage.instance.setConfigurationValue(ENABLED, ""+twitterEnabled);
+            	Storage.instance.setConfigurationValue(POST_POMODOROS, ""+doPost);
+            	Storage.instance.setConfigurationValue(GROUP_USERNAME, ""+groupUsername);
+            	exit();
+            	
+            	notifyConfiguration();
+            }
+            
+            public function notifyConfiguration():void
+            {
+            	// Notify the world 
+            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, ENABLED, ""+twitterEnabled));
+            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, POST_POMODOROS, ""+doPost));
+            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, GROUP_USERNAME, ""+groupUsername));
+            }
+            
+            private function onEnableTwitterChanged(e:Event=null):void {
+            	if (e.target.selected) {
+            		Alert.show("NOTE: If you use twitter all your work will be publically posted on Twitter for everyone to read.");
+            	}
+            }
+			            
+        ]]>
+    </mx:Script>
+
+	<mx:CheckBox id="enabledCheckbox" x="10" y="10" label="Use Twitter (still experimental)" change="onEnableTwitterChanged(event)"/>
+	
+	<mx:Label x="10" y="40" color="#A9A9A9" text="Group Username"/>
+	<mx:TextInput id="groupUsernameField" x="10" y="56" width="130">
+		<mx:toolTip>Enter any username to be used for updates here.</mx:toolTip>
+	</mx:TextInput>
+	
+	<mx:CheckBox x="10" y="88" label="Post status updates" id="postCheckbox" />
+	
+	<mx:Button x="221" y="90" label="Save" click="save()" width="63"/>
+	<mx:Button x="221" y="121" label="Cancel" click="exit()"/>
+	
+</mx:Canvas>
